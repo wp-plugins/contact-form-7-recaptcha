@@ -18,9 +18,9 @@ A significant number of your users can now attest they are human without having 
 
 Why this plugin is different from the others:
 
- - reCAPTCHAs for multiple forms on the same page.
- - define the API keys in your wp-config file to hide the settings UI
- - Github repo - please help me keep it updated
+ - reCAPTCHAs for multiple forms on the same page
+ - define the API keys in your wp-config file to hide the settings page
+ - Github repo - please help me keep it updated : https://github.com/iambriansreed/contact-form-7-recaptcha
 
 == Installation ==
 
