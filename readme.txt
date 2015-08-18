@@ -26,7 +26,7 @@ Why this plugin is different from the others:
 
 1. Upload the entire contents of the zip file to your plugin directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Configure plugin from Settings -> reCAPTCHA
+3. Configure plugin from Contact (Contact Form 7) -> reCAPTCHA
 
 == Changelog ==
  
