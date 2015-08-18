@@ -2,7 +2,7 @@
 /*
 Plugin Name: Contact Form 7 - reCAPTCHA
 Description: The new reCAPTCHA for Contact Form 7 forms. Use shortcode [recaptcha].
-Version: 1.0.0
+Version: 1.1.0
 Author: iambriansreed
 */
 
@@ -46,12 +46,47 @@ class Contact_Form_7_reCAPTCHA
         {
             if ( ! empty( $this->site_key ) && ! empty( $this->secret_key ) )
             {
-                add_action( 'init', array( $this, 'init' ) );
-                add_action( 'wp_footer', array( $this, 'wp_footer' ) );
+                add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts' ) );
+                add_action( 'wp_footer', array( $this, 'wp_footer' ), 999 );
                 add_filter( 'wpcf7_validate', array( $this, 'wpcf7_validate' ), 999 );
             }
             
             add_action( 'wpcf7_init',  array( $this, 'wpcf7_init' ) );
+        }
+    }
+    
+    function wp_enqueue_scripts()
+    {   
+        wp_register_script(
+            'contact_form_7_recaptcha_script',
+            plugins_url( '/script.js' , __FILE__ ),
+            array( 'jquery', 'google_recaptcha_script' ),
+            '1.0.0',
+            true
+        );
+        
+        wp_register_script(
+            'google_recaptcha_script',
+            'https://www.google.com/recaptcha/api.js?onload=contact_form_7_recaptcha_callback&render=explicit',
+            array( 'jquery' ),
+            '1.0.0',
+            true
+        );
+        
+        wp_localize_script(
+            'contact_form_7_recaptcha_script', 
+            'contact_form_7_recaptcha_data', 
+            array(
+                'sitekey' => $this->site_key
+            )
+        );
+    }
+    
+    function wp_footer()
+    {
+        if( count( $this->ids ) )
+        {
+            wp_print_scripts('contact_form_7_recaptcha_script');
         }
     }
     
@@ -60,60 +95,45 @@ class Contact_Form_7_reCAPTCHA
         wpcf7_add_shortcode( 'recaptcha', array( $this, 'shortcode' ), false );
     }
     
-    function init()
-    {
-        wp_register_script( 'contact_form_7_recaptcha_script', 'https://www.google.com/recaptcha/api.js?onload=contact_form_7_recaptcha_callback&render=explicit' );
-    }
-
     function wpcf7_validate( $result )
-    {   
+    {
         if ( isset( $_POST['contact_form_7_recaptcha'] ) )
         {
             $error = true;
+            $error_message = $this->error_message;
             
             if( ! empty( $_POST['g-recaptcha-response'] ) )
             {
                 $url = 'https://www.google.com/recaptcha/api/siteverify?secret=' . $this->secret_key . '&response=' . $_POST['g-recaptcha-response'];
                 $request = wp_remote_get( $url );
-                $body = wp_remote_retrieve_body( $request );
-                $response = json_decode( $body );
-                $error = ! ( isset ( $response->success ) && 1 == $response->success );
+                
+                if( is_wp_error( $request ) )
+                {   
+                    $error = true;
+                    $error_message = "An error occured when verifying the reCaptcha. The form can not be submitted at this time.";
+                    if( is_user_logged_in() )
+                    {
+                        $error_message .= " The errors reported were:<br>";
+                        foreach( $request->errors as $k=>$values )
+                            $error_message .= "<strong>$k</strong>: " . implode( '<br>', $values ) . "<br>";
+                        $error_message .= "These errors may occur on servers which don't support SSL with cURL.";
+                    }
+                }
+                else
+                {
+                    $body = wp_remote_retrieve_body( $request );
+                    $response = json_decode( $body );
+                    $error = ! ( isset ( $response->success ) && 1 == $response->success );
+                }
             }
             
             if( $error )
             {
-                $result->invalidate( array( 'type' => 'recaptcha', 'name' => 'g-recaptcha-explicit' ), $this->error_message ); //. '<pre>' . print_r( $request, 1) . '</pre>');
+                $result->invalidate( array( 'type' => 'recaptcha', 'name' => 'g-recaptcha-explicit' ), $error_message ); //. '<pre>' . print_r( $request, 1) . '</pre>');
             }
         }
         
         return $result;
-    }
-    
-    function wp_footer()
-    {
-        if ( ! count( $this->ids ) )
-        {
-            return;
-        }
-            ?>
-<script type="text/javascript">
-    var contact_form_7_recaptcha_callback = function() {
-        <?php foreach( $this->ids as $id ): ?>
-        grecaptcha.render('<?php echo $id ?>', {
-        'sitekey' : '<?php echo $this->site_key; ?>'
-        });
-        <?php endforeach; ?>
-    };
-    $('.wpcf7').on('mailsent.wpcf7',function(e){
-        var id = $('.g-recaptcha-explicit-id', this).val();
-        $('#' + id).html('');
-        grecaptcha.render(id, {
-            'sitekey' : '<?php echo $this->site_key; ?>'
-        });
-    });
-</script>
-        <?php
-        wp_print_scripts( 'contact_form_7_recaptcha_script' );        
     }
             
     function shortcode( $atts )

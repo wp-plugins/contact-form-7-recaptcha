@@ -2,9 +2,9 @@
 Contributors: iambriansreed
 Donate link: http://iambrian.com/
 Tags: recaptcha, contact form 7, recaptcha v2
-Requires at least: 4.1.2
-Tested up to: 4.1.2
-Stable tag: 1.0.0
+Requires at least: 4.1.0
+Tested up to: 4.2.4
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,3 +27,14 @@ Why this plugin is different from the others:
 1. Upload the entire contents of the zip file to your plugin directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Configure plugin from Settings -> reCAPTCHA
+
+== Changelog ==
+ 
+= 1.1.0 =
+* Fixed the jQuery without a jQuery wrapper.
+* Fixed the javascript queue issues.
+* Fixed the invalid submission error that would break the recaptcha.
+* Show wp_error information to logged in users. Note: SSL cURL requests are problematic in certain environments.
+
+= 1.0.0 =
+* Nothing new to see here.
